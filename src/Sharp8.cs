@@ -1,8 +1,8 @@
 using System.Collections;
 
-public class Cpu
+public class Sharp8
 {
-    byte[] font = 
+    byte[] font =
     {
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
         0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -29,7 +29,7 @@ public class Cpu
     Stack<ushort> stack;
     bool[] display;
 
-    public Cpu()
+    public Sharp8()
     {
         pc = 0x200;
         memory = new byte[4096];
@@ -42,16 +42,56 @@ public class Cpu
     {
         ushort instr = (ushort)(memory[pc] << 8 | memory[pc + 1]);
         pc += 2;
-
         byte op = (byte)(instr >> 12);
 
         switch (op)
         {
+            // 00E0 - clear screen
+            case 0x0:
+                display = new bool[64 * 32];
+                Redraw();
+                break;
+
+            // 1NNN - jump
+            case 0x1:
+                pc = (ushort)(instr & 0x0FFF);
+                break;
+
+            // 6XNN - set register vx 
+            // 7XNN - add value to register vx
+            case 0x6 or 0x7:
+                byte x = (byte)((instr & 0x0F00) >> 8);
+                byte val = (byte)(instr & 0x00FF);
+
+                if (op == 0x6)
+                {
+                    reg[x] = val;
+                }
+                else
+                {
+                    reg[x] += val;
+                }
+                break;
+
+            // ANNN - set index register I
+            case 0xA:
+                I = (ushort) (instr & 0x0FFF);
+                break;
+
+            // DXYN - Draw N pixels tall sprite at V[X],V[Y]
+            case 0xD:
+                break;
+
             default:
                 Console.WriteLine("Unimplemented opcode {0:X2}. Full instruction: {1:X2}", op, instr);
                 Halt();
                 break;
         }
+    }
+
+    private void Redraw()
+    {
+
     }
 
     private void LoadFont()

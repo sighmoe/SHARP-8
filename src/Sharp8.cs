@@ -24,23 +24,24 @@ public class Sharp8
 
 
     byte delayTimer, soundTimer;
-    byte[] memory, reg;
+    byte[] ram, reg;
     ushort pc, I;
     Stack<ushort> stack;
-    byte[] display;
+    byte[] vram;
 
     public Sharp8()
     {
         pc = 0x200;
-        memory = new byte[4096];
+        ram = new byte[4096];
         reg = new byte[16];
         stack = new Stack<ushort>();
-        display = new byte[64 * 32];
+        vram = new byte[Gui.DISPLAY_HEIGHT*Gui.DISPLAY_WIDTH];
     }
 
-    private void FdxCycle()
+    public bool FdxCycle()
     {
-        ushort instr = (ushort)(memory[pc] << 8 | memory[pc + 1]);
+        var vramChanged = false;
+        ushort instr = (ushort)(ram[pc] << 8 | ram[pc + 1]);
         pc += 2;
         byte op = (byte)(instr >> 12);
 
@@ -49,9 +50,17 @@ public class Sharp8
         switch (op)
         {
             // 00E0 - clear screen
+            // 00EE - return from subroutine
             case 0x0:
-                display = new byte[64 * 32];
-                Redraw();
+                if ((instr & 0x00FF) == 0x00E0)
+                {
+                    vram = new byte[64 * 32];
+                    vramChanged = true;
+                }
+                else
+                {
+                    pc = stack.Pop();
+                }
                 break;
 
             // 1NNN - jump
@@ -59,19 +68,42 @@ public class Sharp8
                 pc = (ushort)(instr & 0x0FFF);
                 break;
 
+            // 2NNN - call subroutine at memory location NNN
+            case 0x2:
+            {
+                stack.Push(pc);
+                pc = (ushort)(instr & 0x0FFF);
+            }
+            break;
+
+            // 3XNN - skip if V[X] == NN
+            // 4XNN - skip if V[X] != NN
+            case 0x3 or 0x4:
+            {
+                byte x = (byte) ((instr & 0x0F00) >> 8);
+                byte nn = (byte)(instr & 0x00FF);
+
+                if ((op == 0x3 && reg[x] == nn) || (op == 0x4 && reg[x] != nn))
+                {
+                    pc += 2;
+                }
+                break;
+            }
+
+
             // 6XNN - set register vx 
             // 7XNN - add value to register vx
             case 0x6 or 0x7:
-                byte r = (byte)((instr & 0x0F00) >> 8);
+                byte loc = (byte)((instr & 0x0F00) >> 8);
                 byte val = (byte)(instr & 0x00FF);
 
                 if (op == 0x6)
                 {
-                    reg[r] = val;
+                    reg[loc] = val;
                 }
                 else
                 {
-                    reg[r] += val;
+                    reg[loc] += val;
                 }
                 break;
 
@@ -82,71 +114,77 @@ public class Sharp8
 
             // DXYN - Draw N pixels tall sprite at V[X],V[Y]
             case 0xD:
-                int x = (byte) ((instr & 0x0F00) >> 8);
-                int y = (byte) ((instr & 0x00F0) >> 4);
-                byte n = (byte) (instr & 0x000F); 
+            {
+                uint x = (uint) ((instr & 0x0F00) >> 8);
+                uint y = (uint) ((instr & 0x00F0) >> 4);
+                uint n = (uint) (instr & 0x000F); 
                 
-                byte row = (byte) (reg[y] & 32);
-                byte col = (byte) (reg[x] & 64);
+                uint row = (uint) (reg[y] & 31);
+                uint col = (uint) (reg[x] & 63);
 
                 // clear flag register
                 reg[0xF] = 0;
 
-                for (int i = 0; i < n; i++)
+                for (int r = 0; r < n; r++)
                 {
                     // Don't draw past bottom edge of screen
-                    if (row+i >= 32)
+                    if (row+r >= 32)
                     {
                         continue;
                     }
 
-                    byte bite = memory[I + i];
-                    for (int j = 7; j >= 0; j--)
+                    byte bite = ram[I + r];
+                    for (int c = 7; c >= 0; c--)
                     {
                         // Don't draw past right edge of screen
-                        if (col+j >= 64)
+                        if (col+c >= 64)
                         {
                             continue;
                         }
 
-                        byte bit = (byte) ((bite >> j) & 0x01);
-                        int pixel = ((row+i)*64) + ((col+j));
-                        if (display[pixel] == 1 && bit == 1)
+                        byte bit = (byte) ((bite >> c) & 0x01);
+                        uint pixel = (uint) (((row+r)*Gui.DISPLAY_WIDTH) + (col+(7-c)));
+                        if (vram[pixel] == 1 && bit == 1)
                         {
                             reg[0xF] = 1;
                         }
 
-                        display[pixel] ^= bit;
+                        vram[pixel] ^= bit;
                     }
-                    Redraw();
+                    vramChanged = true;
                 }
                 break;
+            }
+
+            case 0xF:
+            {
+                if ((instr & 0x00FF) == 0x001E)
+                {
+                    uint x = (uint) ((instr & 0x0F00) >> 8);
+                    I += reg[x];
+                }
+                break;
+            }
 
             default:
                 Console.WriteLine("Unimplemented opcode {0:X2}. Full instruction: {1:X2}", op, instr);
                 Halt();
                 break;
+
         }
+        return vramChanged;
     }
 
-    private void Redraw()
+    public byte[] GetVram()
     {
-        Console.WriteLine("CANVAS:");
-        for (int r = 0; r < 32; r++)
-        {
-            for (int c = 0; c < 64; c++)
-            {
-                Console.Write(display[r*64+c]);
-            }
-            Console.WriteLine();
-        }
+        return vram;
     }
 
     private void LoadFont()
     {
         for (int i = 0; i < font.Length; i++)
         {
-            memory[0x050 + i] = font[i];
+            ram[0x050 + i] = font[i];
         }
     }
 
@@ -154,15 +192,7 @@ public class Sharp8
     {
         for (int i = 0; i < rom.Length; i++)
         {
-            memory[0x200 + i] = rom[i];
-        }
-    }
-
-    public void Start()
-    {
-        for (; ; )
-        {
-            FdxCycle();
+            ram[0x200 + i] = rom[i];
         }
     }
 

@@ -3,6 +3,7 @@ public class Gui
 
     public static uint WINDOW_HEIGHT = 600;
     public static uint WINDOW_WIDTH = 800;
+    private uint SCALING_FACTOR = 10;
 
     public static uint DISPLAY_HEIGHT = 32;
     public static uint DISPLAY_WIDTH = 64;
@@ -12,8 +13,8 @@ public class Gui
     private Sharp8 sharp8;
     public Gui(Sharp8 sharp8)
     {
-        this.buffer = new SFML.Graphics.Image(DISPLAY_WIDTH, DISPLAY_HEIGHT);
-        this.viewPort = new SFML.Graphics.Texture(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+        this.buffer = new SFML.Graphics.Image(WINDOW_HEIGHT, WINDOW_WIDTH);
+        this.viewPort = new SFML.Graphics.Texture(WINDOW_HEIGHT, WINDOW_WIDTH);
         this.sharp8 = sharp8;
     }
     public void Start()
@@ -40,6 +41,17 @@ public class Gui
         }
     }
 
+    private void SetScaledPixel(uint col, uint row, SFML.Graphics.Color color)
+    {
+        for (uint i = 0; i < SCALING_FACTOR; i++)
+        {
+            for (uint j = 0; j < SCALING_FACTOR; j++)
+            {
+                this.buffer.SetPixel(col+j,row+i,color);
+            }
+        }
+    }
+
     private void UpdatePixelBuffer(byte[] vram)
     {
         for (uint r = 0; r < DISPLAY_HEIGHT; r++)
@@ -48,7 +60,7 @@ public class Gui
             {
                 var idx = (r*DISPLAY_WIDTH)+c;
                 SFML.Graphics.Color color = vram[idx] == 1 ? SFML.Graphics.Color.White: SFML.Graphics.Color.Black;
-                this.buffer.SetPixel(c,r,color);
+                SetScaledPixel(c*SCALING_FACTOR,r*SCALING_FACTOR,color);
             }
         }
         this.viewPort.Update(buffer);

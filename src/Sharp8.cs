@@ -2,6 +2,7 @@ using System.Collections;
 
 public class Sharp8
 {
+
     byte[] font =
     {
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -24,10 +25,13 @@ public class Sharp8
 
 
     byte delayTimer, soundTimer;
-    byte[] ram, reg;
+    public byte[] ram, reg;
     ushort pc, I;
     Stack<ushort> stack;
     byte[] vram;
+
+    public bool waitForKeyPress;
+    public uint keyPressRegister;
 
     private Random rng;
     public Sharp8()
@@ -37,6 +41,8 @@ public class Sharp8
         reg = new byte[16];
         stack = new Stack<ushort>();
         vram = new byte[Gui.DISPLAY_HEIGHT * Gui.DISPLAY_WIDTH];
+        waitForKeyPress = false;
+        keyPressRegister = 0;
         rng = new Random();
     }
 
@@ -292,21 +298,53 @@ public class Sharp8
                     break;
                 }
 
+            case 0xE:
+                {
+                    byte lsb = (byte)(instr & 0x00FF);
+                    uint x = (uint)((instr & 0x0F00) >> 8);
+                    switch (lsb)
+                    {
+                        case 0xA1:
+                            {
+                                if (reg[x] == 0) 
+                                {
+                                    pc += 2;
+                                }
+                                break;
+                            }
+                        case 0x9E:
+                            {
+                                if (reg[x] != 0)
+                                {
+                                    pc += 2;
+                                }
+                                break;
+                            }
+                    }
+                    break;
+                }
+
             case 0xF:
                 {
                     byte lsb = (byte)(instr & 0x00FF);
+                    uint x = (uint)((instr & 0x0F00) >> 8);
                     switch (lsb)
                     {
+                        case 0x0A:
+                            {
+                                keyPressRegister = x;
+                                waitForKeyPress = true;
+                                while (waitForKeyPress) {}
+                                break;
+                            }
                         case 0x1E:
                             {
-                                uint x = (uint)((instr & 0x0F00) >> 8);
                                 I += reg[x];
                                 break;
                             }
 
                         case 0x33:
                             {
-                                uint x = (uint)((instr & 0x0F00) >> 8);
                                 ram[I] = (byte)(reg[x] / 100);
                                 ram[I + 1] = (byte)((reg[x] / 10) % 10);
                                 ram[I + 2] = (byte)((reg[x] % 100) % 10);
@@ -315,7 +353,6 @@ public class Sharp8
 
                         case 0x55:
                             {
-                                uint x = (uint)((instr & 0x0F00) >> 8);
                                 for (uint i = 0; i <= x; i++)
                                 {
                                     ram[I + i] = reg[i];

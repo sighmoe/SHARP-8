@@ -65,21 +65,22 @@ public class Gui
         {
             window.Close();
         }
-        else if (e.Code == SFML.Window.Keyboard.Key.A)
+        else if (e.Code == SFML.Window.Keyboard.Key.Down)
         {
-            for (uint r = 0; r < WINDOW_HEIGHT; r++)
-            {
-                for (uint c = 0; c < WINDOW_WIDTH; c++)
-                {
-                    this.buffer.SetPixel(c,r,SFML.Graphics.Color.Yellow);
-                }
-            }
-            this.viewPort.Update(buffer);
+            sharp8.reg[sharp8.keyPressRegister] = 0x1;
         }
-        else if (e.Code == SFML.Window.Keyboard.Key.B)
+        else if (e.Code == SFML.Window.Keyboard.Key.Left)
         {
-            this.buffer.SetPixel(1,1,SFML.Graphics.Color.Blue);
-            this.viewPort.Update(buffer);
+            sharp8.reg[sharp8.keyPressRegister] = 0x1;
         }
+        else if (e.Code == SFML.Window.Keyboard.Key.Right)
+        {
+            sharp8.reg[sharp8.keyPressRegister] = 0x1;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.Up)
+        {
+            sharp8.reg[sharp8.keyPressRegister] = 0x1;
+        }
+        sharp8.waitForKeyPress = false;
     }
 }

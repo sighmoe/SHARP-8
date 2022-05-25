@@ -111,6 +111,7 @@ public class Opcodes
         var X = ds.X;
         var Y = ds.Y;
         var N = ds.N;
+        UpdateFlags(ds,s8s);
         V[X] = N switch
         {
             // 8XY0 - V[X] = V[Y]
@@ -163,9 +164,11 @@ public class Opcodes
     {
         s8s.I = ds.NNN;
     }
+    
+    // BNNN - PC = V[0] + NNN
     private static void OpB(DecodeState ds, Sharp8State s8s)
     {
-        return;
+        s8s.Pc = (ushort) (s8s.V[0] + ds.NNN);
     }
 
     // CXNN - V[X] = rand AND NN
@@ -213,7 +216,7 @@ public class Opcodes
 
                 byte bit = (byte)((bite >> c) & 0x01);
                 uint pixel = (uint)(((row + r) * Constants.DISPLAY_WIDTH) + (col + (7 - c)));
-                if (vram[pixel] == 1 && bit == 1)
+                if (vram[pixel] == 1)
                 {
                     V[0xF] = 1;
                 }
@@ -225,13 +228,13 @@ public class Opcodes
     }
     private static void OpE(DecodeState ds, Sharp8State s8s)
     {
-        var K = s8s.K;
+        var V = s8s.V;
         var NN = ds.NN;
         var X = ds.X;
         s8s.Pc += NN switch
         {
-            0xA1 => (ushort)(K[X] == 0 ? 2 : 0),
-            0x9E => (ushort)(K[X] != 0 ? 2 : 0),
+            0xA1 => (ushort)(V[X] == 0 ? 2 : 0),
+            0x9E => (ushort)(V[X] != 0 ? 2 : 0),
             _ => 0,
         };
     }
@@ -251,9 +254,9 @@ public class Opcodes
                 }
             case 0x0A:
                 {
+                    s8s.Pc -= 2;
                     s8s.KeyPressRegister = X;
                     s8s.WaitForKey = true;
-                    while (s8s.WaitForKey) { }
                     break;
                 }
             case 0x15:
@@ -271,11 +274,18 @@ public class Opcodes
                     I += V[X];
                     break;
                 }
+            case 0x29:
+                {
+                    var fontOffset = 0x50;
+                    var digit = V[X];
+                    I = (ushort) (fontOffset + (5*digit));
+                    break;
+                }
             case 0x33:
                 {
                     ram[I] = (byte)(V[X] / 100);
-                    ram[I + 1] = (byte)((V[X] / 10) % 10);
-                    ram[I + 2] = (byte)((V[X] % 100) % 10);
+                    ram[I + 1] = (byte)((V[X] % 100) / 10);
+                    ram[I + 2] = (byte)(V[X] % 10);
                     break;
                 }
             case 0x55:

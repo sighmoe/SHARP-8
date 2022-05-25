@@ -1,6 +1,6 @@
 using Util;
 
-using System.Collections;
+using System.Diagnostics;
 
 public class Sharp8
 {
@@ -25,21 +25,23 @@ public class Sharp8
     };
 
     private Sharp8State s8s;
+    private Stopwatch clock;
     public Sharp8()
     {
+        clock = new Stopwatch();
         s8s = new Sharp8State
         {
             Ram = new byte[4096],
             Vram = new byte[Constants.DISPLAY_HEIGHT * Constants.DISPLAY_WIDTH],
             V = new byte[16],
-            K = new byte[16],
             Pc = 0x200,
             I = 0x0000,
             CallStack = new Stack<ushort>(),
             DelayTimer = 0,
             SoundTimer = 0,
             Cycles = 0,
-            WaitForKey = false
+            WaitForKey = false,
+            VramChanged = false,
         };
         LoadFont();
     }
@@ -73,6 +75,7 @@ public class Sharp8
 
     public void Cycle()
     {
+        clock.Restart();
         var instr = Fetch();
         var ds = Decode(instr);
         Console.WriteLine("Fdx cycle for instr: {0:X2}", instr);
@@ -91,6 +94,12 @@ public class Sharp8
             }  
         }
         s8s.Cycles += 1;
+        var elapsedTimeMicro = clock.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
+        // old: 1852
+        while (elapsedTimeMicro < 3000)
+        {
+            elapsedTimeMicro = clock.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
+        }
     }
         
     public Sharp8State GetSharp8State()

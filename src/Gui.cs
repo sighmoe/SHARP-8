@@ -13,6 +13,7 @@ public class Gui
     private SFML.Graphics.Image buffer;
     private SFML.Graphics.Texture viewPort;
     private Sharp8 sharp8;
+
     public Gui(Sharp8 sharp8)
     {
         this.buffer = new SFML.Graphics.Image(WINDOW_HEIGHT, WINDOW_WIDTH);
@@ -22,19 +23,20 @@ public class Gui
     public void Start()
     {
         var mode = new SFML.Window.VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT);
-        var window = new SFML.Graphics.RenderWindow(mode, "SFML works!");
+        var window = new SFML.Graphics.RenderWindow(mode, "SHARP-8");
         window.KeyPressed += Window_KeyPressed;
+        window.KeyReleased += Window_KeyReleased;
 
         var s8s = this.sharp8.GetSharp8State();
         // Start the game loop
         while (window.IsOpen)
         {
-            
-            // Process events
             window.DispatchEvents();
             this.sharp8.Cycle();
+
             if (s8s.VramChanged)
             {
+                s8s.VramChanged = false;
                 UpdatePixelBuffer(s8s.Vram);
                 var sprite = new SFML.Graphics.Sprite(this.viewPort);
                 sprite.Scale = new SFML.System.Vector2f(SCALING_FACTOR_X,SCALING_FACTOR_Y);
@@ -63,29 +65,159 @@ public class Gui
     private void Window_KeyPressed(object sender, SFML.Window.KeyEventArgs e)
     {
         var s8s = this.sharp8.GetSharp8State();
-        var K = s8s.K;
+        var V = s8s.V;
         var keyPressRegister = s8s.KeyPressRegister;
         var window = (SFML.Window.Window)sender;
         if (e.Code == SFML.Window.Keyboard.Key.Escape)
         {
             window.Close();
         }
-        else if (e.Code == SFML.Window.Keyboard.Key.Down)
+        else if (e.Code == SFML.Window.Keyboard.Key.Num1)
         {
-            K[keyPressRegister] = 0x1;
+            V[keyPressRegister] = 0x1;
         }
-        else if (e.Code == SFML.Window.Keyboard.Key.Left)
+        else if (e.Code == SFML.Window.Keyboard.Key.Num2)
         {
-            K[keyPressRegister] = 0x1;
+            V[keyPressRegister] = 0x2;
         }
-        else if (e.Code == SFML.Window.Keyboard.Key.Right)
+        else if (e.Code == SFML.Window.Keyboard.Key.Num3)
         {
-            K[keyPressRegister] = 0x1;
+            V[keyPressRegister] = 0x3;
         }
-        else if (e.Code == SFML.Window.Keyboard.Key.Up)
+        else if (e.Code == SFML.Window.Keyboard.Key.Num4)
         {
-            K[keyPressRegister] = 0x1;
+            V[keyPressRegister] = 0xC;
         }
-        s8s.WaitForKey = false;
+        else if (e.Code == SFML.Window.Keyboard.Key.Q)
+        {
+            V[keyPressRegister] = 0x4;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.W)
+        {
+            V[keyPressRegister] = 0x5;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.E)
+        {
+            V[keyPressRegister] = 0x6;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.R)
+        {
+            V[keyPressRegister] = 0xD;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.A)
+        {
+            V[keyPressRegister] = 0x7;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.S)
+        {
+            V[keyPressRegister] = 0x8;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.D)
+        {
+            V[keyPressRegister] = 0x9;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.F)
+        {
+            V[keyPressRegister] = 0xE;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.Z)
+        {
+            V[keyPressRegister] = 0xA;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.X)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.C)
+        {
+            V[keyPressRegister] = 0xB;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.V)
+        {
+            V[keyPressRegister] = 0xF;
+        }
+
+        if (s8s.WaitForKey)
+        {
+            s8s.Pc += 2;
+            s8s.WaitForKey = false;
+            s8s.VramChanged = true;
+        }
+    }
+    
+    private void Window_KeyReleased(object sender, SFML.Window.KeyEventArgs e)
+    {
+        var s8s = this.sharp8.GetSharp8State();
+        var V = s8s.V;
+        var keyPressRegister = s8s.KeyPressRegister;
+        var window = (SFML.Window.Window)sender;
+        if (e.Code == SFML.Window.Keyboard.Key.Escape)
+        {
+            window.Close();
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.Num1)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.Num2)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.Num3)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.Num4)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.Q)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.W)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.E)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.R)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.A)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.S)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.D)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.F)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.Z)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.X)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.C)
+        {
+            V[keyPressRegister] = 0x0;
+        }
+        else if (e.Code == SFML.Window.Keyboard.Key.V)
+        {
+            V[keyPressRegister] = 0x0;
+        }
     }
 }

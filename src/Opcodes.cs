@@ -224,18 +224,20 @@ public class Opcodes
     private static void OpE(DecodeState ds, Sharp8State s8s)
     {
         var V = s8s.V;
+        var K = s8s.K;
         var NN = ds.NN;
         var X = ds.X;
         s8s.Pc += NN switch
         {
-            0xA1 => (ushort)(V[X] == 0 ? 2 : 0),
-            0x9E => (ushort)(V[X] != 0 ? 2 : 0),
+            0xA1 => (ushort)(K[V[X]] == 0xFF ? 2 : 0),
+            0x9E => (ushort)(K[V[X]] != 0xFF ? 2 : 0),
             _ => 0,
         };
     }
     private static void OpF(DecodeState ds, Sharp8State s8s)
     {
         var V = s8s.V;
+        var K = s8s.K;
         var ram = s8s.Ram;
         var I = s8s.I;
         var NN = ds.NN;

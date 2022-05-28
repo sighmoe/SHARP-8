@@ -34,6 +34,7 @@ public class Sharp8
             Ram = new byte[4096],
             Vram = new byte[Constants.DISPLAY_HEIGHT * Constants.DISPLAY_WIDTH],
             V = new byte[16],
+            K = new byte[16],
             Pc = 0x200,
             I = 0x0000,
             CallStack = new Stack<ushort>(),
@@ -43,6 +44,11 @@ public class Sharp8
             WaitForKey = false,
             VramChanged = false,
         };
+
+        for (var i = 0; i < 0x10; i++)
+        {
+            s8s.K[i] = 0xFF;
+        } 
         LoadFont();
     }
 
@@ -97,7 +103,7 @@ public class Sharp8
         s8s.Cycles += 1;
         var elapsedTimeMicro = clock.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
         // old: 1852
-        while (elapsedTimeMicro < 3000)
+        while (elapsedTimeMicro < 6000)
         {
             elapsedTimeMicro = clock.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
         }

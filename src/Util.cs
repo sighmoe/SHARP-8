@@ -21,6 +21,8 @@ namespace Util
         public byte[] Ram { get; set; }
         public byte[] Vram { get; set; }
         public byte[] V { get; set; }
+        public byte[] K { get; set; }
+
         public ushort Pc { get; set; }
         public ushort I { get; set; }
         public Stack<ushort> CallStack { get; set; }

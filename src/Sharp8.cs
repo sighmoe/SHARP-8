@@ -1,7 +1,5 @@
 using Util;
 
-using System.Diagnostics;
-
 public class Sharp8
 {
     byte[] font =
@@ -25,10 +23,8 @@ public class Sharp8
     };
 
     private Sharp8State s8s;
-    private Stopwatch clock;
     public Sharp8()
     {
-        clock = new Stopwatch();
         s8s = new Sharp8State
         {
             Ram = new byte[4096],
@@ -81,7 +77,6 @@ public class Sharp8
 
     public void Cycle()
     {
-        clock.Restart();
         // Console.WriteLine("SHARP-8 CPU State:\n {0}", s8s);
         var instr = Fetch();
         var ds = Decode(instr);
@@ -94,19 +89,13 @@ public class Sharp8
         
         if(s8s.SoundTimer > 0)
         {
+            s8s.SoundTimer--;
             if(s8s.SoundTimer == 1)
             {
                 Console.WriteLine("BEEP!\n");
-                s8s.SoundTimer--;
             }  
         }
         s8s.Cycles += 1;
-        var elapsedTimeMicro = clock.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
-        // old: 1852
-        while (elapsedTimeMicro < 6000)
-        {
-            elapsedTimeMicro = clock.ElapsedTicks / (Stopwatch.Frequency / (1000L * 1000L));
-        }
     }
         
     public Sharp8State GetSharp8State()

@@ -203,32 +203,23 @@ public class Opcodes
 
         for (var r = 0; r < N; r++)
         {
-            // Don't draw past bottom edge of screen
-            if (row + r >= 32)
+            byte pixel = ram[I + r];
+            for (int c = 0; c < 8; c++)
             {
-                continue;
-            }
-
-            byte bite = ram[I + r];
-            for (int c = 7; c >= 0; c--)
-            {
-                // Don't draw past right edge of screen
-                if (col + (7 - c) >= 64)
+                var cc = (col + c) % Constants.DISPLAY_WIDTH;
+                var rr = (row + r) % Constants.DISPLAY_HEIGHT;
+                var loc = (rr * Constants.DISPLAY_WIDTH) + cc;
+                if ((pixel & (0x80 >> c)) != 0)
                 {
-                    continue;
+                    if (vram[loc] == 1)
+                    {
+                        s8s.V[0xF] = 1;
+                    }
+                    s8s.Vram[loc] ^= 1;
                 }
-
-                byte bit = (byte)((bite >> c) & 0x01);
-                uint pixel = (uint)(((row + r) * Constants.DISPLAY_WIDTH) + (col + (7 - c)));
-                if (vram[pixel] == 1)
-                {
-                    s8s.V[0xF] = 1;
-                }
-
-                vram[pixel] ^= bit;
             }
-            s8s.VramChanged = true;
         }
+        s8s.VramChanged = true;
     }
     private static void OpE(DecodeState ds, Sharp8State s8s)
     {

@@ -30,5 +30,15 @@ namespace Util
         public bool WaitForKey { get; set; }
         public byte KeyPressRegister { get; set; }
         public bool VramChanged { get; set; }
+
+        public override string ToString()
+        {
+            var registers = "";
+            for (var i = 0; i < V.Length; i++)
+            {
+                registers += String.Format("V{0:X2}: {1:X2}\n", i, V[i]);
+            } 
+            return String.Format("PC:{0:X2}\n I:{1:X2}\n\n{2}\n", Pc, I, registers);
+        }
     }
 }

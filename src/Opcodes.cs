@@ -32,9 +32,13 @@ public class Opcodes
             s8s.Vram = new byte[Constants.DISPLAY_WIDTH * Constants.DISPLAY_HEIGHT];
             s8s.VramChanged = true;
         }
-        else
+        else if (ds.NN == 0xEE)
         {
             s8s.Pc = s8s.CallStack.Pop();
+        }
+        else
+        {
+            s8s.Pc = ds.NNN;
         }
     }
 
@@ -94,7 +98,7 @@ public class Opcodes
         var V = s8s.V;
         var X = ds.X;
         var NN = ds.NN;
-        V[X] = NN;
+        s8s.V[X] = NN;
     }
 
     // 7XNN - add value to register vx
@@ -103,7 +107,7 @@ public class Opcodes
         var V = s8s.V;
         var X = ds.X;
         var NN = ds.NN;
-        V[X] += NN;
+        s8s.V[X] += NN;
     }
     private static void Op8(DecodeState ds, Sharp8State s8s)
     {
@@ -112,7 +116,7 @@ public class Opcodes
         var Y = ds.Y;
         var N = ds.N;
         UpdateFlags(ds,s8s);
-        V[X] = N switch
+        s8s.V[X] = N switch
         {
             // 8XY0 - V[X] = V[Y]
             0x0 => V[Y],
@@ -177,7 +181,7 @@ public class Opcodes
         var V = s8s.V;
         var X = ds.X;
         var NN = ds.NN;
-        V[X] = (byte)(rng.NextInt64(256) & NN);
+        s8s.V[X] = (byte)(rng.NextInt64(256) & NN);
     }
 
     // DXYN - Draw N pixels tall sprite at V[X],V[Y]
@@ -195,7 +199,7 @@ public class Opcodes
         var col = V[X] & 63;
 
         // clear flag register
-        V[0xF] = 0;
+        s8s.V[0xF] = 0;
 
         for (var r = 0; r < N; r++)
         {
@@ -218,7 +222,7 @@ public class Opcodes
                 uint pixel = (uint)(((row + r) * Constants.DISPLAY_WIDTH) + (col + (7 - c)));
                 if (vram[pixel] == 1)
                 {
-                    V[0xF] = 1;
+                    s8s.V[0xF] = 1;
                 }
 
                 vram[pixel] ^= bit;
@@ -249,7 +253,7 @@ public class Opcodes
         {
             case 0x07:
                 {
-                    V[X] = s8s.DelayTimer;
+                    s8s.V[X] = s8s.DelayTimer;
                     break;
                 }
             case 0x0A:
@@ -271,39 +275,36 @@ public class Opcodes
                 }
             case 0x1E:
                 {
-                    I += V[X];
+                    s8s.I += V[X];
                     break;
                 }
             case 0x29:
                 {
-                    var fontOffset = 0x50;
                     var digit = V[X];
-                    I = (ushort) (fontOffset + (5*digit));
+                    s8s.I = (ushort) (5*digit);
                     break;
                 }
             case 0x33:
                 {
-                    ram[I] = (byte)(V[X] / 100);
-                    ram[I + 1] = (byte)((V[X] % 100) / 10);
-                    ram[I + 2] = (byte)(V[X] % 10);
+                    s8s.Ram[I] = (byte)(V[X] / 100);
+                    s8s.Ram[I + 1] = (byte)((V[X] % 100) / 10);
+                    s8s.Ram[I + 2] = (byte)(V[X] % 10);
                     break;
                 }
             case 0x55:
                 {
                     for (var i = 0; i <= X; i++)
                     {
-                        ram[I + i] = V[i];
+                        s8s.Ram[I + i] = V[i];
                     }
-                    I += (ushort)(X + 1);
                     break;
                 }
             case 0x65:
                 {
                     for (var i = 0; i <= X; i++)
                     {
-                        V[i] = ram[I + i];
+                        s8s.V[i] = ram[I + i];
                     }
-                    I += (ushort)(X + 1);
                     break;
                 }
             default:
@@ -327,14 +328,14 @@ public class Opcodes
         var V = s8s.V;
         var X = ds.X;
         var Y = ds.Y;
-        V[0xF] = ds.Op switch
+        s8s.V[0xF] = ds.Op switch
         {
             0x8 => ds.N switch
             {
                 0x4 => (byte)(V[X] + V[Y] > 255 ? 0x1 : 0x0),
-                0x5 => (byte)(V[X] > V[Y] ? 0x1 : 0x0),
+                0x5 => (byte)(V[X] >= V[Y] ? 0x1 : 0x0),
                 0x6 => (byte)((V[X] & 0x1) == 1 ? 0x1 : 0x0),
-                0x7 => (byte)(V[Y] > V[X] ? 0x1 : 0x0),
+                0x7 => (byte)(V[Y] >= V[X] ? 0x1 : 0x0),
                 0xE => (byte)((V[X] & 0x80) > 0 ? 0x1 : 0x0),
                 _ => V[0xF]
             },

@@ -76,9 +76,10 @@ public class Sharp8
     public void Cycle()
     {
         clock.Restart();
+        // Console.WriteLine("SHARP-8 CPU State:\n {0}", s8s);
         var instr = Fetch();
         var ds = Decode(instr);
-        Console.WriteLine("Fdx cycle for instr: {0:X2}", instr);
+        Console.WriteLine("PC: {0:X2}\ninstr: {1:X2}\n", s8s.Pc-2, instr);
         Execute(ds);
         if(s8s.DelayTimer > 0)
         {
@@ -111,7 +112,7 @@ public class Sharp8
     {
         for (var i = 0; i < font.Length; i++)
         {
-            s8s.Ram[0x050 + i] = font[i];
+            s8s.Ram[i] = font[i];
         }
     }
 

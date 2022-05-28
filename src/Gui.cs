@@ -151,11 +151,7 @@ public class Gui
         var V = s8s.V;
         var keyPressRegister = s8s.KeyPressRegister;
         var window = (SFML.Window.Window)sender;
-        if (e.Code == SFML.Window.Keyboard.Key.Escape)
-        {
-            window.Close();
-        }
-        else if (e.Code == SFML.Window.Keyboard.Key.Num1)
+        if (e.Code == SFML.Window.Keyboard.Key.Num1)
         {
             V[keyPressRegister] = 0x0;
         }
